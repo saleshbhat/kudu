@@ -1,7 +1,9 @@
 ﻿using Kudu.Core.Infrastructure;
 using Moq;
 using System;
+using System.IO;
 using System.IO.Abstractions;
+using System.Linq;
 using Xunit;
 
 namespace Kudu.Core.Test
@@ -96,6 +98,52 @@ namespace Kudu.Core.Test
             // Read-Only should return true
             dirBase.Setup(d => d.CreateDirectory(It.IsAny<string>())).Throws<UnauthorizedAccessException>();
             Assert.Equal(true, FileSystemHelpers.IsFileSystemReadOnly());
+        }
+
+        [Theory]
+        [InlineData(false, new string[] { "requirements.txt" }, null)]
+        //[InlineData(true, new string[] { "requirements.txt", "app.py" }, null)]
+        //[InlineData(true, new string[] { "requirements.txt", "runtime.txt" }, "python-3.4.1")]
+        //[InlineData(false, new string[] { "requirements.txt", "runtime.txt" }, "i run all the time")]
+        //[InlineData(false, new string[] { "requirements.txt", "default.asp" }, null)]
+        //[InlineData(false, new string[] { "requirements.txt", "site.aspx" }, null)]
+        //[InlineData(false, new string[0], null)]
+        //[InlineData(false, new string[] { "index.php" }, null)]
+        //[InlineData(false, new string[] { "site.aspx" }, null)]
+        //[InlineData(false, new string[] { "site.aspx", "index2.aspx" }, null)]
+        //[InlineData(false, new string[] { "server.js" }, null)]
+        //[InlineData(false, new string[] { "app.js" }, null)]
+        //[InlineData(false, new string[] { "package.json" }, null)]
+        public void Qqq(bool looksLikePythonExpectedResult, string[] existingFiles, string runtimeTxtBytes)
+        {
+            Console.WriteLine("Testing: {0}", String.Join(", ", existingFiles));
+
+            var directory = new Mock<DirectoryBase>();
+            var file = new Mock<FileBase>();
+            var dirInfoFactory = new Mock<IDirectoryInfoFactory>();
+            var dirInfoBase = new Mock<DirectoryInfoBase>();
+            var fileInfo = new Mock<FileInfoBase>();
+            var fileSystem = new Mock<IFileSystem>();
+
+            dirInfoFactory.Setup(d => d.FromDirectoryName("site")).Returns(dirInfoBase.Object);
+            dirInfoBase.Setup(d => d.GetFiles("*.*", SearchOption.AllDirectories)).Returns(new[] { fileInfo.Object });
+
+            directory.Setup(d => d.GetFiles("site", "*.py")).Returns(existingFiles.Where(f => f.EndsWith(".py")).ToArray());
+
+            foreach (var existingFile in existingFiles)
+            {
+                file.Setup(f => f.Exists("site\\" + existingFile)).Returns(true);
+            }
+
+            fileSystem.Setup(f => f.Directory).Returns(directory.Object);
+            fileSystem.Setup(f => f.File).Returns(file.Object);
+            fileSystem.Setup(f => f.DirectoryInfo).Returns(dirInfoFactory.Object);
+            FileSystemHelpers.Instance = fileSystem.Object;
+
+            DirectoryInfoBase jobBinariesDirectory = FileSystemHelpers.DirectoryInfoFromDirectoryName("site");
+            FileInfoBase[] files = jobBinariesDirectory.GetFiles("*.*", SearchOption.AllDirectories);
+
+            Assert.Equal(1, files.Length);
         }
     }
 }

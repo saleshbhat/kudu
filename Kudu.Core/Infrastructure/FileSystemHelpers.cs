@@ -223,6 +223,10 @@ namespace Kudu.Core.Infrastructure
                 }
             }
         }
+        public static void Qqq(string sourceDirPath, string destinationDirPath)
+        {
+            DirectoryInfoBase sourceDirectory = DirectoryInfoFromDirectoryName(sourceDirPath);
+        }
 
         public static void SetLastWriteTimeUtc(string path, DateTime lastWriteTimeUtc)
         {
