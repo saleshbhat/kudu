@@ -73,17 +73,16 @@ namespace Kudu.Console
             {
                 return PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
             }
-            else
+
+            // Cross child process lock is not working on linux via mono.
+            // When we reach here, deployment lock must be HELD! To solve above issue, we lock again before continue.
+            int returnCode = -1;
+            deploymentLock.TryLockOperation(() =>
             {
-                // Cross child process lock is not working on linux via mono.
-                // When we reach here, deployment lock must be HELD! To solve above issue, we lock again before continue.
-                int returnCode = -1;
-                deploymentLock.TryLockOperation(() =>
-                {
-                    returnCode = PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
-                }, TimeSpan.Zero);
-                return returnCode;
-            }
+                returnCode = PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+            }, TimeSpan.Zero);
+
+            return returnCode;
         }
 
         private static int PerformDeploy(
