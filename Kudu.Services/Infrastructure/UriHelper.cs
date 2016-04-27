@@ -13,7 +13,7 @@ namespace Kudu.Services.Infrastructure
             IEnumerable<string> disguisedHostValues = new List<string>();
 
             // Azure will always pass this header to Kudu, and it always carry the right host name.
-            // when running Kudu on mono in a container, container is binded to a local ip
+            // when running Kudu on mono in a container, container is bound to a local ip
             // so we cannot rely on "request.RequestUri", which will be "127.0.0.1:xxxx".
             if (request.Headers.TryGetValues("DISGUISED-HOST", out disguisedHostValues) && disguisedHostValues.Count() > 0)
             {

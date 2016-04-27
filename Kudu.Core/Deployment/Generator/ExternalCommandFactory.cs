@@ -128,8 +128,7 @@ namespace Kudu.Core.Deployment.Generator
                 }
                 else
                 {
-                    // Content of StarterScript in windos is "@%*", means to be less verbose when execute a external script,
-                    // since by default cmd will print out content of each step.
+                    // Content in StarterScript is "@%*", means to be less verbose when execute an external script, since by default cmd will print out content of each step.
                     // Linux doesn`t print out the content of the step when execute a command, so simply use "/bin/bash" here.
                     return "/bin/bash";
                 }
