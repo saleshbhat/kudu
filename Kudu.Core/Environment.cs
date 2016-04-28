@@ -97,10 +97,7 @@ namespace Kudu.Core
             _siteExtensionSettingsPath = Path.Combine(SiteRootPath, Constants.SiteExtensionsCachePath);
             _diagnosticsPath = Path.Combine(SiteRootPath, Constants.DiagnosticsPath);
             _locksPath = Path.Combine(SiteRootPath, Constants.LocksPath);
-
-            string siteName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
-            siteName = NormalizeSiteName(siteName);
-
+            
             if (OSDetector.IsOnWindows())
             {
                 _sshKeyPath = Path.Combine(rootPath, Constants.SSHKeyPath);
@@ -109,6 +106,8 @@ namespace Kudu.Core
             {
                 // in linux, rootPath is "/home", while .ssh folder need to under "/home/{user}", 
                 // and username and site name is always the same in actual deployment
+                string siteName = System.Environment.GetEnvironmentVariable("APP_POOL_ID");
+                siteName = NormalizeAppPoolId(siteName);
                 _sshKeyPath = Path.Combine(rootPath, siteName, Constants.SSHKeyPath);
             }
             _scriptPath = Path.Combine(binPath, Constants.ScriptsPath);
@@ -355,7 +354,14 @@ namespace Kudu.Core
             public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
         }
 
-        private static string NormalizeSiteName(string siteName)
+        /// <summary>
+        /// Site name could be:
+        ///     ~1{actual name}__f0do
+        ///     mobile${actual name}
+        /// 
+        /// We only interested in the {actual name}
+        /// </summary>
+        private static string NormalizeAppPoolId(string siteName)
         {
             var normalizedSiteName = siteName;
             if (normalizedSiteName.StartsWith("~1", StringComparison.Ordinal))
@@ -363,7 +369,7 @@ namespace Kudu.Core
                 normalizedSiteName = normalizedSiteName.Substring(2);
             }
 
-            normalizedSiteName = Regex.Replace(normalizedSiteName, "__[0-9a-f]{4}$", "").Replace("mobile$", "");
+            normalizedSiteName = Regex.Replace(normalizedSiteName, "__[0-9a-f]{4}$", string.Empty).Replace("mobile$", string.Empty);
             return normalizedSiteName;
         }
     }
